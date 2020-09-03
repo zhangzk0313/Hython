@@ -1,0 +1,10 @@
+{
+    def a = 123.4;
+    print a;
+    a = "hello world";
+    print a;
+    a = 987;
+    print a;
+    def b = 12.3 + 87;
+    print b;
+}

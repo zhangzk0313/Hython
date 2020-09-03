@@ -1,0 +1,3 @@
+def a = 1 + 2;
+def b = a * 4;
+def c = b / 2;

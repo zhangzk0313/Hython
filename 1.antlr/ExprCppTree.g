@@ -20,48 +20,55 @@ PLUS: '+';
 MINUS: '-';
  
 multExpr
-    : atom ((TIMES^ | DIVIDE^ | MOD^) atom)*
+    : atom ((TIMES^ | DIV^ | MOD^) atom)*
     ;
-
+ 
 TIMES: '*';
-DIVIDE: '/'; 
+DIV: '/';
 MOD: '%';
+ 
 atom: INT
     | ID
     | '('! expr ')'!
     ;
- 
-ASSIGN: '=';
+
+defid_sub: ID
+    | ID^ ASSIGN! expr;
+defid: DEF^ defid_sub (','! defid_sub)* ';'!
+    ;
+
+DEF: 'def';
+
+block: '{' block_stmt '}' -> ^(BLOCK block_stmt);
+block_stmt: stmt*;
+BLOCK: '__block__';
 
 stmt: expr ';' NEWLINE -> expr  // tree rewrite syntax
     | ID ASSIGN expr ';' NEWLINE -> ^(ASSIGN ID expr) // tree notation
-    | ';'* NEWLINE ->   // ignore
-    | def_stmt
-    | print_stmt
-    | blocks
+    | defid NEWLINE -> defid
+    | block NEWLINE -> block
+    | NEWLINE ->   // ignore
     ;
-
-print_stmt: PRINT^ expr ';'!;
-def_stmt: DEF^ def_id (','! def_id)* ';'!; 
-def_id: ID^ (ASSIGN! expr)?;
-DEF: 'def';
-PRINT: 'print';
-
-block_code : stmt*;
-blocks : '{' block_code '}' -> ^(BLOCK block_code);
-
-BLOCK: '&';
-
+ 
+ASSIGN: '=';
+ 
 prog
-    : ( blocks {
-            pANTLR3_STRING s = $blocks.tree->toStringTree($blocks.tree);
-            assert(s->chars);
-            printf(" tree \%s\n", s->chars);
-            }
+    : (stmt {
+        #ifdef DEBUG
+            do {
+                pANTLR3_STRING s = $stmt.tree->toStringTree($stmt.tree);
+                if (s->chars == NULL) break;
+                assert(s->chars);
+                printf(" haizei tree \%s\n", s->chars);
+                fflush(stdout);
+            } while (0);
+        #endif    
+        }
         )+
     ;
  
-ID: ('a'..'z'|'A'..'Z')+ ;
+ID: ('a'..'z'|'A'..'Z') ('a'..'z' | 'A'..'Z' | '0'..'9')*;
 INT: '~'? '0'..'9'+ ;
 NEWLINE: '\r'? '\n' ;
 WS : (' '|'\t')+ {$channel = HIDDEN;};
+
